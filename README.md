@@ -1,48 +1,77 @@
 # tf-ip2cr-gcp
+
 Terraform plans for generating ephemeral test resources for testing ip2cr in GCP.
 
 ## Summary
 
 Currently, this set of terraform plans:
 
-1. Generates an EC2 instance
-1. Creates a NLB
-1. Creates an ALB
-1. Creates a CloudFront distribution
-1. Attaches the CloudFront distribution to the ALB
-1. Attaches the ALB to the EC2 instance
-1. Separately, attaches the NLB to the EC2 instance
-
 This should provide several vectors for testing IP2CR.
 
 ## Usage
 
-### Bootstrap the Prerequisite Resources
+### Configure GCP Application Default Credentials
 
-The plans use S3 as a backend and DynamoDB for state tracking. A script is included to easily generate the resources needed to support this.
+If needed, configure local [application default credentials](https://cloud.google.com/docs/authentication/provide-credentials-adc) for gcloud:
 
 ```bash
-./utils/generate_backend.sh
+gcloud auth application-default login
 ```
 
-### Set TF Vars
+### Bootstrap the Prerequisite Resources
 
-Generate a `terraform.tfvars` file and fill in the variables as approriate.
+The plans use Google Cloud Storage as a backend. A standalone Terraform plan is included to generate the prerequisite infrastructure to support this:
+
+```bash
+cd ./utils/generate_backend/
+export GOOGLE_PROJECT="<GCP_PROJECT_ID>"
+terraform init && terraform apply
+```
+
+After Terraform completes its run, it should include the Cloud Storage bucket name in the output; keep this handy as we will need it for the next step.
+
+Example:
+
+```bash
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+tf-gcs-bucket-metadata = [
+  "tf-ip2cr-gcp-ce925bf29c4ee1b4-bucket-tfstate",
+]
+```
+
+#### Generate Backend Vars
+
+Generate a `backend.tfvars` file in the project root and fill in the variables as appropriate.
 
 ```hcl
-ami_id = "<EC2_AMI>"  # any AMI of your choice can be used
-key_pair_name = "<EC2_SSH_KEY_PAIR_NAME>"
-subnets = [<SUBNETS_FOR_LBS>]
-vpc = "<VPC>"
+bucket = "<TF_GCS_BUCKET_NAME>"
+prefix = "terraform/state"
 ```
 
 Example:
 
 ```hcl
-ami_id = "ami-053b0d53c279acc90"  # Ubuntu Server 22.04 LTS
-key_pair_name = "default"
-subnets = ["subnet-123456789", "subnet-987654321"]
-vpc = "vpc-12345abcde"
+bucket = "tf-ip2cr-gcp-ce925bf29c4ee1b4-bucket-tfstate"
+prefix = "terraform/state"
+```
+
+### Set TF Vars
+
+Generate a `terraform.tfvars` file and fill in the variables as appropriate.
+
+```hcl
+gcp_project_id = "<GCP_PROJECT_ID>"
+gcp_project_region = "<GCP_PROJECT_REGION>"
+```
+
+Example:
+
+```hcl
+gcp_project_id = "ip-2-cloudresource"
+gcp_project_region = "us-central1"
 ```
 
 ### Plan and Apply Plans
