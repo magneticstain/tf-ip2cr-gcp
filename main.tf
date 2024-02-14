@@ -18,6 +18,7 @@ provider "google" {
 
 module "ip2cr-test-suite" {
     source = "./modules/ip2cr_test_suite"
+    project_region = var.project_region
     compute_instance_image_name = var.compute_instance_image_name
     compute_zone = var.compute_zone
     compute_network = var.compute_network
@@ -25,6 +26,7 @@ module "ip2cr-test-suite" {
 
 output "ip2cr-testing-metadata" {
   value = [
-    module.ip2cr-test-suite.ip2cr-compute-metadata
+    module.ip2cr-test-suite.ip2cr-compute-metadata,
+    module.ip2cr-test-suite.ip2cr-gclb-metadata
   ]
 }

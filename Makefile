@@ -8,6 +8,10 @@ TF_BACKEND_CONFIG = ./backend.tfvars
 init:
 	terraform init -backend-config=$(TF_BACKEND_CONFIG)
 
+validate:
+	$(MAKE) init
+	terraform validate
+
 plan:
 	$(MAKE) init
 	terraform plan

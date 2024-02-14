@@ -1,3 +1,8 @@
+variable "project_region" {
+    type = string
+    description = "Default region to use with target Google Cloud project"
+}
+
 variable "compute_zone" {
     type = string
     description = "GCP zone to use for Compute VMs"
