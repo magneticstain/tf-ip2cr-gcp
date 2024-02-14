@@ -16,6 +16,14 @@ apply:
 	$(MAKE) init
 	terraform apply
 
+auto-approve:
+	$(MAKE) init
+	terraform apply -auto-approve
+
 destroy:
 	$(MAKE) init
 	terraform destroy
+
+quick-destroy:
+	$(MAKE) init
+	terraform destroy -auto-approve
