@@ -1,6 +1,66 @@
 # Generate all resources supported by ip2cr
 
+## Networking
+resource "google_compute_network" "ip2cr-net" {
+  name = "ip2cr-net"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "ip2cr-subnet" {
+  name = "ip2cr-subnet-1"
+  network = google_compute_network.ip2cr-net.id
+  ip_cidr_range = "192.168.200.0/24"
+  stack_type = "IPV4_IPV6"
+  ipv6_access_type = "EXTERNAL"
+}
+
+## Compute
+resource "google_service_account" "ip2cr-test-compute" {
+  account_id   = "ip2cr-test-compute"
+  display_name = "Custom SA for VM Instance Used With IP2CR Testing"
+}
+
+resource "google_compute_instance" "ip2cr-test" {
+  name          = "ip2cr-test-instance"
+  machine_type  = "e2-micro"
+  zone          = var.compute_zone
+
+  boot_disk {
+    initialize_params {
+      image = var.compute_instance_image_name
+      size  = 10
+    }
+  }
+
+  network_interface {
+    network = google_compute_network.ip2cr-net.id
+    subnetwork = google_compute_subnetwork.ip2cr-subnet.id
+    stack_type = "IPV4_IPV6"
+
+    access_config {}
+
+    ipv6_access_config {
+      network_tier = "PREMIUM"
+    }
+  }
+
+  service_account {
+    email  = google_service_account.ip2cr-test-compute.email
+    scopes = ["cloud-platform"]
+  }
+}
+
+output "ip2cr-compute-metadata" {
+  value = [
+    google_compute_instance.ip2cr-test.id,
+    google_compute_instance.ip2cr-test.instance_id,
+    google_compute_instance.ip2cr-test.network_interface.0.access_config.0.nat_ip,
+    google_compute_instance.ip2cr-test.network_interface.0.ipv6_access_config.0.external_ipv6
+  ]
+}
+
 ## GCLB
+### Service Accounts
 resource "google_service_account" "ip2cr-test-gclb" {
   account_id   = "ip2cr-test-gclb"
   display_name = "Custom SA for VM Instance Used With IP2CR Testing"
@@ -123,46 +183,34 @@ resource "google_compute_firewall" "ip2cr-test-firewall" {
 
 output "ip2cr-gclb-metadata" {
   value = [
-    google_compute_instance_group_manager.ip2cr-test-instance-grp.instance_group,
+    google_compute_instance_group_manager.ip2cr-test-instance-grp.id,
     google_compute_global_address.ip2cr-test-global-ipv4-address.address,
-    google_compute_global_address.ip2cr-test-global-ipv6-address.address,
+    google_compute_global_address.ip2cr-test-global-ipv6-address.address
   ]
 }
 
-## Compute
-resource "google_service_account" "ip2cr-test-compute" {
-  account_id   = "ip2cr-test-compute"
-  display_name = "Custom SA for VM Instance Used With IP2CR Testing"
+## CloudSQL
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
 }
 
-resource "google_compute_instance" "ip2cr-test" {
-  name          = "ip2cr-test-instance"
-  machine_type  = "e2-micro"
-  zone          = var.compute_zone
+resource "google_sql_database_instance" "ip2cr-test-db" {
+  name                = "ip2cr-test-db-${random_id.db_name_suffix.hex}"
+  database_version    = "POSTGRES_15"
+  deletion_protection = false
 
-  boot_disk {
-    initialize_params {
-      image = var.compute_instance_image_name
-      size  = 10
+  settings {
+    tier = "db-f1-micro"
+
+    ip_configuration {
+      ipv4_enabled = true
     }
   }
-
-  network_interface {
-    network = var.compute_network
-
-    access_config {}
-  }
-
-  service_account {
-    email  = google_service_account.ip2cr-test-compute.email
-    scopes = ["cloud-platform"]
-  }
 }
 
-output "ip2cr-compute-metadata" {
+output "ip2cr-cloudsql-metadata" {
   value = [
-    google_compute_instance.ip2cr-test.id,
-    google_compute_instance.ip2cr-test.instance_id,
-    google_compute_instance.ip2cr-test.network_interface.0.access_config.0.nat_ip
+    google_sql_database_instance.ip2cr-test-db.name,
+    google_sql_database_instance.ip2cr-test-db.ip_address.0.ip_address
   ]
 }
