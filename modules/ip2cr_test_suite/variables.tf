@@ -1,19 +1,14 @@
-variable "ami_id" {
+variable "compute_zone" {
     type = string
-    description = "IDs of AMI to use for test EC2 instance"
+    description = "GCP zone to use for Compute VMs"
 }
 
-variable "key_pair_name" {
+variable "compute_instance_image_name" {
     type = string
-    description = "Name of SSH key pair to use for access to test EC2 instance"
+    description = "Name of the GCP image to use for test compute instance"
 }
 
-variable "subnets" {
-    type = list
-    description = "IDs of subnets that load balancers should live in"
-}
-
-variable "vpc" {
+variable "compute_network" {
     type = string
-    description = "VPC that load balancers should live in"
+    description = "GCP network to use for Compute VMs"
 }
