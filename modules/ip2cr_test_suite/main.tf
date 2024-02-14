@@ -29,3 +29,11 @@ resource "google_compute_instance" "ip2cr-test" {
     scopes = ["cloud-platform"]
   }
 }
+
+output "ip2cr-compute-metadata" {
+  value = [
+    google_compute_instance.ip2cr-test.id,
+    google_compute_instance.ip2cr-test.instance_id,
+    google_compute_instance.ip2cr-test.network_interface.0.access_config.0.nat_ip
+  ]
+}

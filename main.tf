@@ -22,3 +22,9 @@ module "ip2cr-test-suite" {
     compute_zone = var.compute_zone
     compute_network = var.compute_network
 }
+
+output "ip2cr-testing-metadata" {
+  value = [
+    module.ip2cr-test-suite.ip2cr-compute-metadata
+  ]
+}
