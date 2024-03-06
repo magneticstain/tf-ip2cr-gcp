@@ -7,6 +7,8 @@ Terraform plans for generating ephemeral test resources for testing ip2cr in GCP
 Currently, this set of terraform plans:
 
 1. Creates a GCP Compute instance
+1. Generates a load balancer that fronts two other instances
+1. Starts a CloudSQL instance
 
 This should provide several vectors for testing IP2CR.
 
